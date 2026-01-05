@@ -1,4 +1,3 @@
-
 // Procedural Texture Generator
 // Creates 64x64 textures for the Raycaster
 
@@ -15,10 +14,21 @@ function createTexture(name, drawFn) {
 }
 
 export function initTextures() {
-    // 1. STONE WALL (Mossy & Brighter)
+    updateWallTexture(0); // Default Wall
+    initDoors();
+}
+
+export function updateWallTexture(hue) {
+    // Default hue = 0 (or undefined)
+    const h = hue || 0;
+
     createTexture('WALL', (ctx, s) => {
-        // Base - Lighter Grey
-        ctx.fillStyle = '#7f8c8d';
+        // Base Color - varied by Hue
+        // Default was lighter grey ~hsl(200, 5%, 52%)
+        const baseSat = (h === 0) ? '5%' : '25%';
+        const baseLight = '50%';
+
+        ctx.fillStyle = `hsl(${h}, ${baseSat}, ${baseLight})`;
         ctx.fillRect(0, 0, s, s);
 
         // Noise
@@ -27,9 +37,8 @@ export function initTextures() {
             ctx.fillRect(Math.random() * s, Math.random() * s, 2, 2);
         }
 
-        // Brick Pattern
-        ctx.fillStyle = '#555'; // Lighter Grid
-        // ... (Grid logic same as before) ...
+        // Brick Pattern (Filter overlay)
+        ctx.fillStyle = 'rgba(255,255,255,0.1)';
         // Horizontal lines
         for (let y = 0; y < s; y += 16) {
             ctx.fillRect(0, y, s, 2);
@@ -42,7 +51,20 @@ export function initTextures() {
             }
         }
 
-        // Highlights/Shadows (Same as before)
+        // Moss/Grit (Random colored noise based on hue)
+        // Complementary or Analogous hue for moss
+        const mossHue = (h + 120) % 360;
+        for (let i = 0; i < 25; i++) {
+            let mx = Math.random() * s;
+            let my = Math.random() * s;
+            const size = 3 + Math.random() * 8;
+            ctx.fillStyle = `hsla(${mossHue}, 40%, 40%, 0.3)`;
+            ctx.beginPath();
+            ctx.arc(mx, my, size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Highlights/Shadows (Relief effect)
         ctx.fillStyle = 'rgba(0,0,0,0.2)';
         for (let y = 0; y < s; y += 16) {
             let offset = (y / 16) % 2 === 0 ? 0 : 8;
@@ -58,21 +80,17 @@ export function initTextures() {
                 ctx.fillRect(x + 2, y + 2, 2, 12);
             }
         }
-
-        // --- MOSS EFFECT ---
-        // Random patches of green
-        for (let k = 0; k < 8; k++) {
-            const mx = Math.random() * s;
-            const my = Math.random() * s;
-            const size = 5 + Math.random() * 10;
-            ctx.fillStyle = `rgba(${50 + Math.random() * 50}, ${150 + Math.random() * 50}, ${50 + Math.random() * 50}, 0.6)`;
-            for (let p = 0; p < 20; p++) {
-                ctx.fillRect(mx + (Math.random() - 0.5) * size, my + (Math.random() - 0.5) * size, 2, 2);
-            }
-        }
     });
 
-    // 2. DOORS (Variable Colors + Wear)
+    // Update Secret Wall to match new Wall
+    createTexture('SECRET_V2', (ctx, s) => {
+        if (TEXTURES['WALL']) {
+            ctx.drawImage(TEXTURES['WALL'], 0, 0);
+        }
+    });
+}
+
+function initDoors() {
     const createDoor = (name, color, knobColor = '#f1c40f') => {
         createTexture(name, (ctx, s) => {
             // Base Color
@@ -110,13 +128,11 @@ export function initTextures() {
                 ctx.stroke();
             }
 
-            // RUST (For all doors to some degree, heavier on Copper if we wanted logic, but random is fine)
-            // Orange/Brown speckles
+            // RUST
             for (let i = 0; i < 50; i++) {
-                ctx.fillStyle = 'rgba(139, 69, 19, 0.4)'; // SaddleBrown transparent
+                ctx.fillStyle = 'rgba(139, 69, 19, 0.4)';
                 ctx.fillRect(Math.random() * s, Math.random() * s, 2, 2);
             }
-
 
             // Rivets
             ctx.fillStyle = 'rgba(255,255,255,0.4)';
@@ -141,16 +157,9 @@ export function initTextures() {
     // Iron Door (Silver/Grey)
     createDoor('DOOR_1', '#bdc3c7', '#2c3e50');
 
-    // Copper Door (Rust/Orange)
+    // Copper Door (Rust/Orange) (Darker orange for better contrast?)
     createDoor('DOOR_2', '#d35400', '#f1c40f');
 
     // Cobalt Door (Deep Blue)
     createDoor('DOOR_3', '#0047ab', '#bdc3c7');
-
-    // 3. SECRET WALL (Identical to Wall)
-    createTexture('SECRET_V2', (ctx, s) => {
-        if (TEXTURES['WALL']) {
-            ctx.drawImage(TEXTURES['WALL'], 0, 0);
-        }
-    });
 }

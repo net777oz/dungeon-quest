@@ -3,7 +3,7 @@ import { loadLevel, exportMapData, createEmptyMap, renderEditor, handleEditorInp
 import { renderGame } from './renderer.js';
 import { handleGameInput, updateGame, performInteraction } from './game.js';
 import { LEVELS } from './levels.js';
-import { initTextures } from './textures.js';
+import { initTextures, updateWallTexture } from './textures.js';
 import { ProcGen } from './procgen.js';
 
 // --- Initialization ---
@@ -28,6 +28,11 @@ window.onload = function () {
     // Global Functions for UI
     window.generateRandomMap = (size) => {
         resetGameUI();
+
+        // Randomize Wall Visuals
+        const randomHue = Math.floor(Math.random() * 360);
+        updateWallTexture(randomHue);
+
         // preserve size if passed, else current
         const s = size || AppState.mapSize;
         const levelData = ProcGen.generateLevel(s);

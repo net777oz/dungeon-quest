@@ -81,24 +81,28 @@ export class ProcGen {
         let availableDoors = [TILES.DOOR_1, TILES.DOOR_2, TILES.DOOR_3];
         let availableKeys = [TILES.KEY_1, TILES.KEY_2, TILES.KEY_3];
 
-        // We only place 'doors' count
-        for (let i = 0; i < doors; i++) {
+        // We place doors in REVERSE order (Deepest/Highest Tier to Closest).
+        // This ensures that Key N (Deep) is placed in the large accessible area.
+        // Then Door N-1 (Medium) is placed closer, and Key N-1 is placed in the *remaining* accessible area (which is smaller).
+        // This effectively prevents "Lockout" scenarios where a low-tier door blocks a high-tier key.
+        for (let i = doors - 1; i >= 0; i--) {
             // Re-analyze from Start based on CURRENT map state (doors block paths)
             const currentAnalysis = this.analyzeMap(map, size, startX, startY);
 
             // If we can't reach far enough, stop.
             if (currentAnalysis.maxDist < 5) break;
 
-            // Find valid door spots: Empty tiles that are "chooke points" or just on the path.
-            // Simplified: Pick a tile on the path to the furthest point, roughly 50-70% of the way.
+            // Find valid door spots
             const path = this.getPath(currentAnalysis.paths, currentAnalysis.maxPos);
 
-            if (path.length < 5) continue; // Too short to block
+            if (path.length < 5) continue;
 
-            // Pick a spot for the Door
-            // Avoid blocking immediately near start
-            // Let's pick roughly 60% down the path, but check validity (corridor preferred)
-            let doorIndex = Math.floor(path.length * 0.6);
+            // Pick a spot for the Door. 
+            // Since we are going High -> Low, we want the first doors (High) to be DEEP.
+            // And later doors (Low) to be Shallow.
+            // Let's vary the "percentage down the path" based on Tier?
+            // Actually, just placing it at ~60-80% of current max path works well repeatedly.
+            let doorIndex = Math.floor(path.length * 0.7);
             let doorPos = path[doorIndex];
 
             // Ensure door isn't at start or adjacent
@@ -109,35 +113,29 @@ export class ProcGen {
             map[doorPos.y][doorPos.x] = doorTile;
 
             // Place Key
-            // Key must be accessible from Start in the *current* map.
-            // But we assume the player has already keys for previous doors.
-            // So we treat previous doors (0 to i-1) as Walkable.
-            const previousDoors = availableDoors.slice(0, i);
+            // With reverse order, we just need to place the key in the CURRENTLY accessible area.
+            // The door we just placed is now a Wall. 
+            // The key for THIS door must be reachable *now*.
+            const lockedAnalysis = this.analyzeMap(map, size, startX, startY);
 
-            const lockedAnalysis = this.analyzeMap(map, size, startX, startY, false, previousDoors); // Treat new door as wall, old doors as empty
-
-            // Find a random spot in lockedAnalysis for the Key
-            // Prefer dead-ends or far-away spots in the accessible zone to make it a hunt.
             const keyCandidates = [];
             for (let y = 1; y < size - 1; y++) {
                 for (let x = 1; x < size - 1; x++) {
                     if (lockedAnalysis.dists[y][x] !== -1 && map[y][x] === TILES.EMPTY) {
-                        // Must be empty (no other objects)
                         keyCandidates.push({ x, y, dist: lockedAnalysis.dists[y][x] });
                     }
                 }
             }
 
-            // Pick a candidate, favoring further distances
+            // Pick a candidate
             keyCandidates.sort((a, b) => b.dist - a.dist);
-            // Take top 30%
-            const topCandidates = keyCandidates.slice(0, Math.ceil(keyCandidates.length * 0.3));
+            // Take top 50% to allow some variance but safe distance
+            const topCandidates = keyCandidates.slice(0, Math.ceil(keyCandidates.length * 0.5));
             const keyPos = topCandidates[Math.floor(Math.random() * topCandidates.length)];
 
             if (keyPos) {
                 map[keyPos.y][keyPos.x] = availableKeys[i];
             } else {
-                // Fallback: put key right next to start if map is tiny/full
                 map[1][2] = availableKeys[i];
             }
         }
