@@ -200,6 +200,12 @@ h3 {
     font-size: 28px;
     position: relative;
     box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
+    color: transparent;
+    text-shadow: none;
+}
+
+#slot-treasure {
+    color: var(--text-color);
 }
 
 .inv-slot::before {
@@ -214,6 +220,7 @@ h3 {
 }
 
 .inv-slot.has-item {
+    color: var(--text-color);
     border-color: var(--highlight);
     background: radial-gradient(circle, rgba(243, 156, 18, 0.4) 0%, rgba(0, 0, 0, 0.6) 100%);
     box-shadow: 0 0 15px rgba(243, 156, 18, 0.4), inset 0 0 5px rgba(255, 255, 255, 0.2);
@@ -385,6 +392,28 @@ button:active {
     box-shadow: 0 0 20px rgba(241, 196, 15, 0.8), inset 0 0 15px rgba(255, 255, 255, 0.2) !important;
     background: radial-gradient(circle, rgba(241, 196, 15, 0.4) 0%, rgba(0, 0, 0, 0.8) 100%) !important;
     animation: goldPulse 2s infinite ease-in-out;
+}
+
+/* Key Material Styles */
+/* Key Material Styles */
+.inv-slot.key-iron {
+    border-color: #bdc3c7;
+    box-shadow: 0 0 10px rgba(189, 195, 199, 0.5);
+    filter: grayscale(100%) brightness(1.2);
+}
+
+.inv-slot.key-copper {
+    border-color: #d35400;
+    box-shadow: 0 0 10px rgba(211, 84, 0, 0.5);
+    filter: sepia(1) hue-rotate(-50deg) saturate(3) brightness(0.8);
+    /* Red/Orange shift */
+}
+
+.inv-slot.key-cobalt {
+    border-color: #0047ab;
+    box-shadow: 0 0 10px rgba(0, 71, 171, 0.5);
+    filter: sepia(1) hue-rotate(170deg) saturate(3) brightness(0.8);
+    /* Blue shift */
 }
 
 @keyframes goldPulse {

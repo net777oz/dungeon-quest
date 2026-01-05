@@ -76,7 +76,13 @@ export function renderEditor() {
     for (let y = 0; y < AppState.mapSize; y++) {
         for (let x = 0; x < AppState.mapSize; x++) {
             const tile = AppState.map[y][x];
-            ctx.fillStyle = TILE_COLORS[tile] || '#000';
+            // Determine Background Color
+            let bgColor = TILE_COLORS[tile] || '#000';
+            // Items should have dark background so icon pops
+            if (tile >= TILES.START) {
+                bgColor = 'rgba(0,0,0,0.5)';
+            }
+            ctx.fillStyle = bgColor;
             ctx.fillRect(offsetX + x * cellSize, offsetY + y * cellSize, cellSize - 1, cellSize - 1);
 
             // Icon
@@ -84,6 +90,15 @@ export function renderEditor() {
                 ctx.font = `${cellSize / 1.5}px Arial`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
+
+                // Icon Color
+                ctx.fillStyle = "white";
+                if (tile >= TILES.START) {
+                    ctx.fillStyle = TILE_COLORS[tile]; // Use the specific color for the icon
+                    // Treasure override
+                    if (tile === TILES.TREASURE) ctx.fillStyle = "#e74c3c"; // Ruby
+                }
+
                 ctx.fillText(TILE_ICONS[tile], offsetX + x * cellSize + cellSize / 2, offsetY + y * cellSize + cellSize / 2);
             }
         }

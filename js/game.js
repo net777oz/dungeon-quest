@@ -261,18 +261,23 @@ function updateInventoryUI() {
     }
 
     setSlot('slot-hammer', inv.hammer);
-    setSlot('slot-key1', inv.keys[0]);
-    setSlot('slot-key2', inv.keys[1]);
-    setSlot('slot-key3', inv.keys[2]);
+    setSlot('slot-key1', inv.keys[0], 'key-iron');
+    setSlot('slot-key2', inv.keys[1], 'key-copper');
+    setSlot('slot-key3', inv.keys[2], 'key-cobalt');
 
     const tCount = document.getElementById('treasure-count');
     if (tCount) tCount.innerText = inv.treasures;
 }
 
-function setSlot(id, hasItem) {
+function setSlot(id, hasItem, className = '') {
     const el = document.getElementById(id);
     if (el) {
-        if (hasItem) el.classList.add('has-item');
-        else el.classList.remove('has-item');
+        if (hasItem) {
+            el.classList.add('has-item');
+            if (className) el.classList.add(className);
+        } else {
+            el.classList.remove('has-item');
+            if (className) el.classList.remove(className);
+        }
     }
 }

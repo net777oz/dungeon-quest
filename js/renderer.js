@@ -124,7 +124,9 @@ export function renderGame(dt) {
             // Texture Selection
             let texName = 'WALL';
             if (hitObject === TILES.SECRET_WALL) texName = 'SECRET_V2'; // Or default wall if secret shouldn't show
-            if (hitObject >= TILES.DOOR_1 && hitObject <= TILES.DOOR_3) texName = 'DOOR';
+            if (hitObject === TILES.DOOR_1) texName = 'DOOR_1';
+            if (hitObject === TILES.DOOR_2) texName = 'DOOR_2';
+            if (hitObject === TILES.DOOR_3) texName = 'DOOR_3';
 
             const texture = TEXTURES[texName];
 
@@ -226,7 +228,14 @@ export function renderGame(dt) {
                     ctx.textBaseline = "middle";
 
                     // Default Style
-                    ctx.fillStyle = "white";
+                    ctx.fillStyle = TILE_COLORS[sprite.tile] || "white";
+
+                    // Specific Overrides for Gem Look
+                    if (sprite.tile === TILES.TREASURE) {
+                        ctx.fillStyle = "#e74c3c"; // Ruby Red
+                        ctx.shadowColor = "#c0392b";
+                        ctx.shadowBlur = 15;
+                    }
                     ctx.shadowColor = "rgba(0,0,0,0.8)";
                     ctx.shadowBlur = 10;
 

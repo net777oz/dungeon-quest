@@ -22,8 +22,8 @@ export const TILE_COLORS = {
     [TILES.MAP_BASIC]: "#bdc3c7",     // Basic Grey/White
     [TILES.MAP_ADVANCED]: "#d35400",  // Rusty/Brown
     [TILES.MAP_LEGENDARY]: "#f1c40f", // Gold
-    [TILES.KEY_1]: "#e74c3c", [TILES.KEY_2]: "#e74c3c", [TILES.KEY_3]: "#e74c3c",
-    [TILES.DOOR_1]: "#8e44ad", [TILES.DOOR_2]: "#8e44ad", [TILES.DOOR_3]: "#8e44ad"
+    [TILES.KEY_1]: "#bdc3c7", [TILES.KEY_2]: "#d35400", [TILES.KEY_3]: "#0047ab", // Iron, Copper, Cobalt
+    [TILES.DOOR_1]: "#bdc3c7", [TILES.DOOR_2]: "#d35400", [TILES.DOOR_3]: "#0047ab"
 };
 
 export const TILE_ICONS = {
@@ -36,8 +36,8 @@ export const TILE_ICONS = {
     [TILES.MAP_BASIC]: "🗺️",
     [TILES.MAP_ADVANCED]: "🗺️",
     [TILES.MAP_LEGENDARY]: "🗺️",
-    [TILES.KEY_1]: "🔑1", [TILES.KEY_2]: "🔑2", [TILES.KEY_3]: "🔑3",
-    [TILES.DOOR_1]: "🚪1", [TILES.DOOR_2]: "🚪2", [TILES.DOOR_3]: "🚪3"
+    [TILES.KEY_1]: "🔑", [TILES.KEY_2]: "🔑", [TILES.KEY_3]: "🔑",
+    [TILES.DOOR_1]: "🚪", [TILES.DOOR_2]: "🚪", [TILES.DOOR_3]: "🚪"
 };
 
 export const WALL_COLORS = {

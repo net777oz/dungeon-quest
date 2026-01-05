@@ -59,50 +59,63 @@ export function initTextures() {
         }
     });
 
-    // 2. WOODEN DOOR (Brighter)
-    createTexture('DOOR', (ctx, s) => {
-        // Base Wood - Lighter Brown
-        ctx.fillStyle = '#8d6e63';
-        ctx.fillRect(0, 0, s, s);
+    // 2. DOORS (Variable Colors)
+    const createDoor = (name, color, knobColor = '#f1c40f') => {
+        createTexture(name, (ctx, s) => {
+            // Base Color
+            ctx.fillStyle = color;
+            ctx.fillRect(0, 0, s, s);
 
-        // Wood Grain
-        for (let i = 0; i < s; i += 4) {
-            ctx.fillStyle = (i / 4) % 2 === 0 ? '#795548' : '#6d4c41';
-            ctx.fillRect(i, 0, 4, s);
-        }
+            // Add Texture Noise
+            for (let i = 0; i < 300; i++) {
+                ctx.fillStyle = Math.random() > 0.5 ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.15)';
+                ctx.fillRect(Math.random() * s, Math.random() * s, 2, 2);
+            }
 
-        // Iron Frame (Blue-ish Grey)
-        ctx.fillStyle = '#707b7c';
-        ctx.fillRect(0, 0, 4, s);
-        ctx.fillRect(s - 4, 0, 4, s);
-        ctx.fillRect(0, 0, s, 4);
-        ctx.fillRect(0, s - 4, s, 4);
+            // Shading/Grain (Metal plate look - Inner Recess)
+            ctx.fillStyle = 'rgba(0,0,0,0.2)';
+            ctx.fillRect(4, 4, s - 8, s - 8);
 
-        // Crossbars
-        ctx.fillRect(0, 20, s, 4);
-        ctx.fillRect(0, 40, s, 4);
+            ctx.fillStyle = color; // Restore center
+            ctx.fillRect(8, 8, s - 16, s - 16);
 
-        // Rivets
-        ctx.fillStyle = '#bdc3c7';
-        [22, 42].forEach(y => {
-            ctx.fillRect(2, y, 2, 2);
-            ctx.fillRect(s - 4, y, 2, 2);
-            ctx.fillRect(s / 2, y, 2, 2);
+            // Inner Noise
+            for (let i = 0; i < 150; i++) {
+                ctx.fillStyle = Math.random() > 0.5 ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.15)';
+                ctx.fillRect(8 + Math.random() * (s - 16), 8 + Math.random() * (s - 16), 2, 2);
+            }
+
+            // Rivets
+            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            [12, s - 12].forEach(x => {
+                [12, s - 12].forEach(y => {
+                    ctx.beginPath();
+                    ctx.arc(x, y, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+            });
+
+            // Handle
+            ctx.fillStyle = knobColor;
+            ctx.beginPath();
+            ctx.arc(s - 12, s / 2, 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowColor = 'black';
+            ctx.shadowBlur = 2;
         });
+    };
 
-        // Handle
-        ctx.fillStyle = '#f1c40f'; // Gold handle
-        ctx.beginPath();
-        ctx.arc(s - 10, s / 2, 3, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowColor = 'black';
-        ctx.shadowBlur = 2;
-    });
+    // Iron Door (Silver/Grey)
+    createDoor('DOOR_1', '#bdc3c7', '#2c3e50');
+
+    // Copper Door (Rust/Orange)
+    createDoor('DOOR_2', '#d35400', '#f1c40f');
+
+    // Cobalt Door (Deep Blue)
+    createDoor('DOOR_3', '#0047ab', '#bdc3c7');
 
     // 3. SECRET WALL (Identical to Wall)
     createTexture('SECRET_V2', (ctx, s) => {
-        // Just draw the Wall texture exactly
-        // We ensure WALL exists in TEXTURES
         if (TEXTURES['WALL']) {
             ctx.drawImage(TEXTURES['WALL'], 0, 0);
         }

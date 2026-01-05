@@ -350,6 +350,18 @@ function buildPalette() {
         div.className = 'palette-item';
         div.innerText = TILE_ICONS[val];
 
+        // Apply Color
+        let color = "white";
+        // Items logic
+        if (val >= TILES.START) {
+            const baseCol = (typeof TILE_COLORS[val] === 'string') ? TILE_COLORS[val] : '#fff';
+            color = baseCol;
+            // Treasure Override
+            if (val === TILES.TREASURE) color = "#e74c3c"; // Ruby
+        }
+        div.style.color = color;
+        div.style.textShadow = `0 0 5px ${color}`;
+
         div.onclick = () => {
             AppState.selectedTile = val;
             document.querySelectorAll('.palette-item').forEach(el => el.classList.remove('selected'));
