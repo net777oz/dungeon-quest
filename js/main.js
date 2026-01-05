@@ -11,8 +11,23 @@ window.onload = function () {
     console.log("Dungeon Quest Initializing...");
     initTextures();
 
+    // Helper to cleanup UI
+    function resetGameUI() {
+        const victory = document.querySelector('.victory-screen');
+        if (victory) victory.remove();
+
+        // Also remove any lingering floating icons or debris
+        document.querySelectorAll('.floating-icon').forEach(el => el.remove());
+        document.querySelectorAll('.debris-particle').forEach(el => el.remove());
+
+        // Remove fx-overlay if exists (flashes)
+        const fx = document.getElementById('fx-overlay');
+        if (fx) fx.remove();
+    }
+
     // Global Functions for UI
     window.generateRandomMap = (size) => {
+        resetGameUI();
         // preserve size if passed, else current
         const s = size || AppState.mapSize;
         const levelData = ProcGen.generateLevel(s);
@@ -27,6 +42,7 @@ window.onload = function () {
     };
 
     window.restartLevel = () => {
+        resetGameUI();
         // Just reload current map state structure?
         // Actually we need to reset player and inventory but keep map.
         // But wait, the map is modified (doors opened).
