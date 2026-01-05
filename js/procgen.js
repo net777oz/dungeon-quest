@@ -109,13 +109,12 @@ export class ProcGen {
             map[doorPos.y][doorPos.x] = doorTile;
 
             // Place Key
-            // Key must be accessible from Start in the *current* map (where the new door exists as an obstacle).
-            // Actually, since we just placed the door, we need to check accessibility AGAIN or use the known "before door" set.
-            // Optimization: The 'path' indices 0 to doorIndex-1 are definitely accessible.
-            // Also any branch explicitly reachable from those nodes.
-            // Let's re-scan accessible area *ignoring* the new door (treating it as Wall).
+            // Key must be accessible from Start in the *current* map.
+            // But we assume the player has already keys for previous doors.
+            // So we treat previous doors (0 to i-1) as Walkable.
+            const previousDoors = availableDoors.slice(0, i);
 
-            const lockedAnalysis = this.analyzeMap(map, size, startX, startY); // Door is solid now
+            const lockedAnalysis = this.analyzeMap(map, size, startX, startY, false, previousDoors); // Treat new door as wall, old doors as empty
 
             // Find a random spot in lockedAnalysis for the Key
             // Prefer dead-ends or far-away spots in the accessible zone to make it a hunt.
@@ -257,7 +256,7 @@ export class ProcGen {
     }
 
     // BFS Helper
-    static analyzeMap(map, size, startX, startY, ignoreDoors = false) {
+    static analyzeMap(map, size, startX, startY, ignoreDoors = false, allowedTiles = []) {
         const dists = Array(size).fill().map(() => Array(size).fill(-1));
         const paths = {}; // To reconstruction
         const queue = [{ x: startX, y: startY, dist: 0 }];
@@ -269,6 +268,7 @@ export class ProcGen {
         const isWalkable = (val) => {
             if (val === TILES.EMPTY || val === TILES.START || val === TILES.HAMMER || val === TILES.TREASURE || (val >= TILES.KEY_1 && val <= TILES.KEY_3) || (val >= TILES.MAP_BASIC && val <= TILES.MAP_LEGENDARY)) return true;
             if (ignoreDoors && (val >= TILES.DOOR_1 && val <= TILES.DOOR_3)) return true;
+            if (allowedTiles.includes(val)) return true;
             return false;
         };
 

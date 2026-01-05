@@ -1,3 +1,5 @@
+import { AppState } from './state.js';
+
 export class Effects {
     static init() {
         // Create overlay elements if they don't exist
