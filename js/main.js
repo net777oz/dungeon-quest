@@ -1,4 +1,4 @@
-import { AppState, TILES, TILE_ICONS } from './state.js';
+import { AppState, TILES, TILE_ICONS, TILE_COLORS } from './state.js';
 import { loadLevel, exportMapData, createEmptyMap, renderEditor, handleEditorInput, placeTileAtCursor } from './editor.js';
 import { renderGame } from './renderer.js';
 import { handleGameInput, updateGame, performInteraction } from './game.js';
