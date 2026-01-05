@@ -236,8 +236,23 @@ export function renderGame(dt) {
                         ctx.shadowColor = "#c0392b";
                         ctx.shadowBlur = 15;
                     }
-                    ctx.shadowColor = "rgba(0,0,0,0.8)";
-                    ctx.shadowBlur = 10;
+                    // KEY GLOWS (To force visibility)
+                    else if (sprite.tile === TILES.KEY_1) { // Iron
+                        ctx.shadowColor = "#bdc3c7";
+                        ctx.shadowBlur = 20;
+                    }
+                    else if (sprite.tile === TILES.KEY_2) { // Copper
+                        ctx.shadowColor = "#d35400";
+                        ctx.shadowBlur = 20;
+                    }
+                    else if (sprite.tile === TILES.KEY_3) { // Cobalt
+                        ctx.shadowColor = "#0047ab";
+                        ctx.shadowBlur = 25;
+                    }
+                    else {
+                        ctx.shadowColor = "rgba(0,0,0,0.8)";
+                        ctx.shadowBlur = 10;
+                    }
 
                     // GLOW EFFECTS for MAPS
                     if (sprite.tile === TILES.MAP_ADVANCED) {
