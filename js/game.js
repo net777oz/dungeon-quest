@@ -175,18 +175,28 @@ function checkTileInteraction() {
         let msg = "찾았다!";
         let color = "#ffd700";
 
+        let cssClass = '';
         if (tile === TILES.MAP_BASIC || tile === TILES.MAP_ADVANCED || tile === TILES.MAP_LEGENDARY) {
             msg = "지도를 넓혔다!";
             color = "#3498db";
             Effects.flashColor('#3498db'); // Blue
         } else if (tile === TILES.TREASURE) {
             Effects.flashColor('#f1c40f'); // Gold
+        } else if (tile === TILES.KEY_1) {
+            cssClass = 'filter-iron';
+            Effects.flashColor('#bdc3c7');
+        } else if (tile === TILES.KEY_2) {
+            cssClass = 'filter-copper';
+            Effects.flashColor('#d35400');
+        } else if (tile === TILES.KEY_3) {
+            cssClass = 'filter-cobalt';
+            Effects.flashColor('#0047ab');
         } else {
             Effects.flashColor('#ffffff'); // White
         }
 
         // Show Notification ONCE
-        Effects.showFloatingIcon(TILE_ICONS[tile], msg, color);
+        Effects.showFloatingIcon(TILE_ICONS[tile], msg, color, cssClass);
 
         if (tile === TILES.TREASURE) {
             if (AppState.inventory.treasures >= AppState.inventory.totalTreasures) {

@@ -394,26 +394,37 @@ button:active {
     animation: goldPulse 2s infinite ease-in-out;
 }
 
-/* Key Material Styles */
+/* Filter Utilities (Shared) */
+.filter-iron {
+    filter: grayscale(100%) contrast(1.2);
+}
+
+.filter-copper {
+    filter: sepia(100%) hue-rotate(-50deg) saturate(300%);
+}
+
+.filter-cobalt {
+    filter: hue-rotate(210deg) saturate(200%) brightness(0.8);
+}
+
 /* Key Material Styles */
 .inv-slot.key-iron {
     border-color: #bdc3c7;
     box-shadow: 0 0 10px rgba(189, 195, 199, 0.5);
-    filter: grayscale(100%) brightness(1.2);
+    filter: grayscale(100%) contrast(1.2);
+    /* Keep redundant for specificity safe */
 }
 
 .inv-slot.key-copper {
     border-color: #d35400;
     box-shadow: 0 0 10px rgba(211, 84, 0, 0.5);
-    filter: sepia(1) hue-rotate(-50deg) saturate(3) brightness(0.8);
-    /* Red/Orange shift */
+    filter: sepia(100%) hue-rotate(-50deg) saturate(300%);
 }
 
 .inv-slot.key-cobalt {
     border-color: #0047ab;
     box-shadow: 0 0 10px rgba(0, 71, 171, 0.5);
-    filter: sepia(1) hue-rotate(170deg) saturate(3) brightness(0.8);
-    /* Blue shift */
+    filter: hue-rotate(210deg) saturate(200%) brightness(0.8);
 }
 
 @keyframes goldPulse {

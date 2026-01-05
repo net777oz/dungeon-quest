@@ -358,6 +358,11 @@ function buildPalette() {
             color = baseCol;
             // Treasure Override
             if (val === TILES.TREASURE) color = "#e74c3c"; // Ruby
+
+            // Filters for keys
+            if (val === TILES.KEY_1) div.classList.add('filter-iron');
+            if (val === TILES.KEY_2) div.classList.add('filter-copper');
+            if (val === TILES.KEY_3) div.classList.add('filter-cobalt');
         }
         div.style.color = color;
         div.style.textShadow = `0 0 5px ${color}`;

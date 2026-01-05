@@ -23,12 +23,12 @@ export class Effects {
         el.style.animation = 'flashFade 0.5s ease-out forwards';
     }
 
-    static showFloatingIcon(icon, text, color = 'white') {
+    static showFloatingIcon(icon, text, color = 'white', cssClass = '') {
         const container = document.getElementById('game-container');
         const el = document.createElement('div');
         el.className = 'floating-icon';
         el.innerHTML = `
-            <div style="font-size: 5rem;">${icon}</div>
+            <div style="font-size: 5rem;" class="${cssClass}">${icon}</div>
             <div style="font-size: 2rem; font-weight:bold; color: ${color}; text-shadow: 0 2px 4px #000, 0 0 10px ${color}; white-space: nowrap;">${text}</div>
         `;
         container.appendChild(el);
