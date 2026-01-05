@@ -62,10 +62,33 @@ export class Effects {
             <div class="firework"></div>
             <div class="firework"></div>
             <div class="firework"></div>
+            
+            <div style="margin-top: 20px; z-index: 100; position: relative; display: flex; gap: 10px; justify-content: center;">
+                <button class="v-btn" onclick="restartLevel()">🔄 다시 하기 (Restart)</button>
+                <button class="v-btn" onclick="generateRandomMap()">🎲 같은 크기 (Regenerate)</button>
+            </div>
+            
+            <div style="margin-top: 10px; z-index: 100; position: relative; display: flex; gap: 10px; justify-content: center;">
+                <button id="btn-smaller" class="v-btn" onclick="resizeMap(-5)">⬇️ 작게 (-5)</button>
+                <button id="btn-larger" class="v-btn" onclick="resizeMap(5)">⬆️ 크게 (+5)</button>
+            </div>
         `;
         container.appendChild(div);
 
-        // Add click to dismiss/restart? 
-        // For now just show it.
+        // Button State Logic
+        const size = AppState.mapSize;
+        const btnSmall = div.querySelector('#btn-smaller');
+        const btnLarge = div.querySelector('#btn-larger');
+
+        if (size <= 10) {
+            btnSmall.disabled = true;
+            btnSmall.style.opacity = 0.5;
+            btnSmall.style.cursor = 'not-allowed';
+        }
+        if (size >= 25) { // User said "max size" (20? 25?). Let's cap at 25 essentially.
+            btnLarge.disabled = true;
+            btnLarge.style.opacity = 0.5;
+            btnLarge.style.cursor = 'not-allowed';
+        }
     }
 }

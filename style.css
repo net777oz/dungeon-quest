@@ -427,6 +427,31 @@ button:active {
     filter: hue-rotate(210deg) saturate(200%) brightness(0.8);
 }
 
+/* Victory Buttons */
+.v-btn {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    border: 2px solid #fff;
+    color: white;
+    padding: 10px 20px;
+    font-size: 1.2rem;
+    border-radius: 8px;
+    cursor: pointer;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.v-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4);
+    background: linear-gradient(135deg, #2980b9, #3498db);
+}
+
+.v-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
 @keyframes goldPulse {
 
     0%,

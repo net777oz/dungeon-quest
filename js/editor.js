@@ -20,6 +20,9 @@ export function loadLevel(levelData) {
     // Deep copy the map to avoid editing the original reference in LEVELS
     AppState.map = JSON.parse(JSON.stringify(levelData.map));
 
+    // BACKUP for Retry
+    AppState.initialMap = JSON.parse(JSON.stringify(levelData.map)); // Save pristine state
+
     // Reset Player State
     AppState.player = { x: 1.5, y: 1.5, dir: 0 };
     AppState.inventory = {

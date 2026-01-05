@@ -4,18 +4,67 @@ import { renderGame } from './renderer.js';
 import { handleGameInput, updateGame, performInteraction } from './game.js';
 import { LEVELS } from './levels.js';
 import { initTextures } from './textures.js';
+import { ProcGen } from './procgen.js';
 
 // --- Initialization ---
 window.onload = function () {
     console.log("Dungeon Quest Initializing...");
     initTextures();
 
+    // Global Functions for UI
+    window.generateRandomMap = (size) => {
+        // preserve size if passed, else current
+        const s = size || AppState.mapSize;
+        const levelData = ProcGen.generateLevel(s);
+        loadLevel(levelData);
+        // Force update Slider if size changed
+        const slider = document.getElementById('size-slider');
+        if (slider) {
+            slider.value = s;
+            const label = document.getElementById('size-label');
+            if (label) label.innerText = `${s}x${s}`;
+        }
+    };
+
+    window.restartLevel = () => {
+        // Just reload current map state structure?
+        // Actually we need to reset player and inventory but keep map.
+        // But wait, the map is modified (doors opened).
+        // Ideally we should have a "Backup" of the initial map state.
+        // For ProcGen, we can just regenerate if the user wants "Restart" (Same Layout).
+        // BUT ProcGen is random. We can't regenerate same layout unless seeded.
+        // So we need to store the 'initial' map.
+        // Simplification: "Restart" for random maps might just be "Regenerate".
+        // User asked: "Restart current map as is" vs "Regenerate same size".
+        // So we need to implement a soft reset.
+        if (AppState.initialMap) {
+            AppState.map = JSON.parse(JSON.stringify(AppState.initialMap));
+            AppState.player = { x: 1.5, y: 1.5, dir: 0 };
+            AppState.inventory = { hammer: false, mapLevel: 0, keys: [false, false, false], treasures: 0, totalTreasures: 0 };
+            // Recount treasures just in case
+            let tCount = 0;
+            for (let row of AppState.map) for (let cell of row) if (cell === TILES.TREASURE) tCount++;
+            AppState.inventory.totalTreasures = tCount;
+
+            enterPlayMode();
+        } else {
+            // Fallback
+            window.generateRandomMap();
+        }
+    };
+
+    window.resizeMap = (delta) => {
+        let newSize = AppState.mapSize + delta;
+        if (newSize < 10) newSize = 10;
+        if (newSize > 25) newSize = 25; // Max limit just in case
+        window.generateRandomMap(newSize);
+    };
+
     // Default Start: Level 1 in Play Mode
-    // Default Start: Level 1
     if (LEVELS.length > 0) {
         loadLevel(LEVELS[0]);
     } else {
-        createEmptyMap(10);
+        window.generateRandomMap(10); // Start with random 10x10
     }
     setupEvents();
     buildPalette();
