@@ -236,18 +236,21 @@ export function renderGame(dt) {
                         ctx.shadowColor = "#c0392b";
                         ctx.shadowBlur = 15;
                     }
-                    // KEY GLOWS (To force visibility)
-                    else if (sprite.tile === TILES.KEY_1) { // Iron
+                    // KEY GLOWS & FILTERS (Force Emoji Color)
+                    else if (sprite.tile === TILES.KEY_1) { // Iron (Silver)
                         ctx.shadowColor = "#bdc3c7";
                         ctx.shadowBlur = 20;
+                        ctx.filter = "grayscale(100%) contrast(1.2)";
                     }
-                    else if (sprite.tile === TILES.KEY_2) { // Copper
+                    else if (sprite.tile === TILES.KEY_2) { // Copper (Orange)
                         ctx.shadowColor = "#d35400";
                         ctx.shadowBlur = 20;
+                        ctx.filter = "sepia(100%) hue-rotate(-50deg) saturate(300%)";
                     }
-                    else if (sprite.tile === TILES.KEY_3) { // Cobalt
+                    else if (sprite.tile === TILES.KEY_3) { // Cobalt (Blue)
                         ctx.shadowColor = "#0047ab";
                         ctx.shadowBlur = 25;
+                        ctx.filter = "hue-rotate(210deg) saturate(200%) brightness(0.8)";
                     }
                     else {
                         ctx.shadowColor = "rgba(0,0,0,0.8)";
@@ -265,6 +268,7 @@ export function renderGame(dt) {
 
                     ctx.fillText(TILE_ICONS[sprite.tile], spriteScreenX, drawStartY + drawHeight / 2);
                     ctx.shadowBlur = 0;
+                    ctx.filter = "none";
                 }
             }
         }
