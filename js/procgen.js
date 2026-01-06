@@ -2,6 +2,26 @@ import { TILES } from './state.js';
 
 export class ProcGen {
     static generateLevel(size) {
+        const MAX_ATTEMPTS = 50;
+        for (let i = 0; i < MAX_ATTEMPTS; i++) {
+            const result = this.tryGenerateLevel(size);
+            // Count actual treasures placed to be sure
+            let actualTreasures = 0;
+            for (let y = 0; y < size; y++) {
+                for (let x = 0; x < size; x++) {
+                    if (result.map[y][x] === TILES.TREASURE) actualTreasures++;
+                }
+            }
+
+            if (this.checkMapSolvable(result.map, size, { x: 1, y: 1 }, actualTreasures)) {
+                return result;
+            }
+        }
+        console.warn("Could not generate solvable map, returning last attempt");
+        return this.tryGenerateLevel(size);
+    }
+
+    static tryGenerateLevel(size) {
         // Difficulty Config
         let treasures = 1;
         let doors = 1;
@@ -24,17 +44,14 @@ export class ProcGen {
             map.push(row);
         }
 
-        // 2. Maze Carving (Recursive Backtracking DFS)
-        // Ensure odd coordinates for rooms to have walls between them in a 2x scaled grid logic,
-        // but here we are carving 1x1 tiles.
-        // For a maze in a grid of size WxH, we usually need odd dimensions or careful step of 2.
-        // Let's use a standard step-2 algorithm. 
-        // Start at 1,1
+        // 2. Maze Carving (Growing Tree Algorithm)
+        // Mixed selection: 50% Newest (DFS - Winding) / 50% Random (Prim - Branching)
+        // This creates a nice balance of corridors and forks.
         const startX = 1;
         const startY = 1;
         map[startY][startX] = TILES.EMPTY;
 
-        const stack = [{ x: startX, y: startY }];
+        const active = [{ x: startX, y: startY }];
         const directions = [
             { dx: 0, dy: -2 }, // Up
             { dx: 0, dy: 2 },  // Down
@@ -42,30 +59,93 @@ export class ProcGen {
             { dx: 2, dy: 0 }   // Right
         ];
 
-        while (stack.length > 0) {
-            const current = stack[stack.length - 1];
+        while (active.length > 0) {
+            // Selection Strategy: Mixed
+            let currentIndex;
+            const selection = Math.random();
+            if (selection > 0.5) {
+                currentIndex = active.length - 1; // Newest (DFS)
+            } else {
+                currentIndex = Math.floor(Math.random() * active.length); // Random (Branching)
+            }
 
-            // Shuffle directions
-            directions.sort(() => Math.random() - 0.5);
+            const current = active[currentIndex];
 
-            let carved = false;
+            // Available Neighbors
+            const neighbors = [];
             for (const dir of directions) {
                 const nx = current.x + dir.dx;
                 const ny = current.y + dir.dy;
-                const midX = current.x + (dir.dx / 2);
-                const midY = current.y + (dir.dy / 2);
 
                 if (nx > 0 && nx < size - 1 && ny > 0 && ny < size - 1 && map[ny][nx] === TILES.WALL) {
-                    map[ny][nx] = TILES.EMPTY;
-                    map[midY][midX] = TILES.EMPTY;
-                    stack.push({ x: nx, y: ny });
-                    carved = true;
-                    break;
+                    neighbors.push({ x: nx, y: ny, dir });
                 }
             }
 
-            if (!carved) {
-                stack.pop();
+            if (neighbors.length > 0) {
+                const chosen = neighbors[Math.floor(Math.random() * neighbors.length)];
+                const nx = chosen.x;
+                const ny = chosen.y;
+                const midX = current.x + (chosen.dir.dx / 2);
+                const midY = current.y + (chosen.dir.dy / 2);
+
+                map[ny][nx] = TILES.EMPTY;
+                map[midY][midX] = TILES.EMPTY;
+                active.push({ x: nx, y: ny });
+            } else {
+                // No valid neighbors, remove from active
+                active.splice(currentIndex, 1);
+            }
+        }
+
+        // 2.5 Braiding (Loop Generation)
+        // Identify Dead Ends (cells with 3 walls) and remove a wall to create loops.
+        // This significantly reduces the "linear" feel.
+        const deadEnds = [];
+        for (let y = 1; y < size - 1; y++) {
+            for (let x = 1; x < size - 1; x++) {
+                if (map[y][x] === TILES.EMPTY) {
+                    let walls = 0;
+                    if (map[y - 1][x] === TILES.WALL) walls++;
+                    if (map[y + 1][x] === TILES.WALL) walls++;
+                    if (map[y][x - 1] === TILES.WALL) walls++;
+                    if (map[y][x + 1] === TILES.WALL) walls++;
+
+                    if (walls === 3) deadEnds.push({ x, y });
+                }
+            }
+        }
+
+        // Connect 50% of dead ends
+        for (const de of deadEnds) {
+            if (Math.random() < 0.5) {
+                // Try to connect to a neighbor that is NOT the one we came from.
+                // Actually, just look for ANY neighbor that is EMPTY but separated by a wall?
+                // Or just carve valid wall to ANY empty neighbor.
+                const validCarves = [];
+                const neighborDirs = [
+                    { dx: 0, dy: -1 }, { dx: 0, dy: 1 }, { dx: -1, dy: 0 }, { dx: 1, dy: 0 }
+                ];
+
+                for (const nd of neighborDirs) {
+                    const nx = de.x + nd.dx;
+                    const ny = de.y + nd.dy;
+                    const nnx = de.x + nd.dx * 2;
+                    const nny = de.y + nd.dy * 2;
+
+                    // If neighbor is wall (the blockage) AND the cell BEYOND is empty (valid loop target)
+                    // Ensuring we don't carve into outer boundary or void
+                    if (nx > 0 && nx < size - 1 && ny > 0 && ny < size - 1 && map[ny][nx] === TILES.WALL) {
+                        if (nnx > 0 && nnx < size - 1 && nny > 0 && nny < size - 1 && map[nny][nnx] === TILES.EMPTY) {
+                            validCarves.push({ x: nx, y: ny });
+                        }
+                    }
+                }
+
+                if (validCarves.length > 0) {
+                    const carve = validCarves[Math.floor(Math.random() * validCarves.length)];
+                    map[carve.y][carve.x] = TILES.EMPTY;
+                }
             }
         }
 
@@ -142,14 +222,9 @@ export class ProcGen {
 
         // 5. Place Treasures
         // Re-analyze final map accessibility (assuming all doors openable)
-        // But functionally, we want treasures in deep dead ends relative to the full maze.
-        // So treat doors as walkable for this calculation? Yes, logical reachable.
-        // BUT `analyzeMap` treats doors as Obstacles by default (isSolid check?).
-        // Let's pass a flag to walk through doors.
         const finalAnalysis = this.analyzeMap(map, size, startX, startY, true);
 
         let placedTreasures = 0;
-        // Naive: Just pick the N furthest empty tiles.
         const openTiles = [];
         for (let y = 1; y < size - 1; y++) {
             for (let x = 1; x < size - 1; x++) {
@@ -158,18 +233,54 @@ export class ProcGen {
                 }
             }
         }
-        openTiles.sort((a, b) => b.dist - a.dist);
 
+        // Anti-Clumping Logic (Furthest Point Sampling)
+        const treasurePositions = [];
         for (let i = 0; i < treasures; i++) {
-            if (openTiles.length > i) {
-                const t = openTiles[i];
+            if (openTiles.length === 0) break;
+
+            if (i === 0) {
+                // First treasure: Furthest from Start
+                openTiles.sort((a, b) => b.dist - a.dist);
+                const t = openTiles[0];
                 map[t.y][t.x] = TILES.TREASURE;
+                treasurePositions.push(t);
+                placedTreasures++;
+                openTiles.splice(0, 1);
+            } else {
+                // Subsequent: Maximize minimum distance to EXISTING treasures
+                let bestTile = null;
+                let maxMinDist = -1;
+                let bestIdx = -1;
+
+                for (let k = 0; k < openTiles.length; k++) {
+                    const candidate = openTiles[k];
+                    let minDist = Infinity;
+
+                    for (const placed of treasurePositions) {
+                        // Manhattan Distance
+                        const d = Math.abs(candidate.x - placed.x) + Math.abs(candidate.y - placed.y);
+                        if (d < minDist) minDist = d;
+                    }
+
+                    if (minDist > maxMinDist) {
+                        maxMinDist = minDist;
+                        bestTile = candidate;
+                        bestIdx = k;
+                    }
+                }
+
+                if (bestTile) {
+                    map[bestTile.y][bestTile.x] = TILES.TREASURE;
+                    treasurePositions.push(bestTile);
+                    placedTreasures++;
+                    openTiles.splice(bestIdx, 1);
+                }
             }
         }
 
         // 6. Hammer (Reachable from Start)
         // Re-scan with doors BLOCKED to ensure Hammer is in the "Lobby" area (optional, but safer)
-        // OR treating doors as closed is fine.
         const lobbyAnalysis = this.analyzeMap(map, size, startX, startY, false);
         const lobbyTiles = [];
         for (let y = 1; y < size - 1; y++) {
@@ -202,45 +313,40 @@ export class ProcGen {
             }
         }
 
-        // 8. Place Maps (1-3)
-        // Basic, Advanced, Legendary
-        const mapCount = 1 + Math.floor(Math.random() * 3);
+        // 8. Place Maps (Probabilistic)
+        // 50% chance of 0 maps. If spawning, 1-2 maps.
+        let mapCount = 0;
+        if (Math.random() > 0.5) {
+            mapCount = 1 + Math.floor(Math.random() * 2); // 1 or 2
+        }
+
         const mapTypes = [TILES.MAP_BASIC, TILES.MAP_ADVANCED, TILES.MAP_LEGENDARY];
 
         let placedMaps = 0;
-        // Use `openTiles` (sorted by distance) from earlier, but filter out consumed ones.
-        // We need fresh check of empty tiles.
-        const mapCandidates = [];
-        for (let y = 1; y < size - 1; y++) {
-            for (let x = 1; x < size - 1; x++) {
-                if (map[y][x] === TILES.EMPTY) { // Must still be empty
-                    // Get dist from finalAnalysis
-                    const d = finalAnalysis.dists[y][x];
-                    if (d > 0) mapCandidates.push({ x, y, dist: d });
-                }
-            }
-        }
-        mapCandidates.sort((a, b) => a.dist - b.dist); // Sort Ascending distance
+        // Use `openTiles` which has already had treasures removed.
+        // Re-filter for consumed tiles? No, splice removed them.
 
-        // Shuffle map types to pick WHICH ones to place
+        // We need to re-sort or just use them.
+        // Actually, let's just pick from remaining openTiles, preferably far ones for better maps.
+        // Sort by distance from start again
+        openTiles.sort((a, b) => a.dist - b.dist);
+
         const typesToPlace = [];
-        for (let i = 0; i < mapCount; i++) typesToPlace.push(mapTypes[i]); // Always Basic first? Or random?
-        // User said: "Advanced maps should be harder to find". 
-        // So Basic -> close, Legendary -> far.
+        for (let i = 0; i < mapCount; i++) typesToPlace.push(mapTypes[i]);
 
         for (const mType of typesToPlace) {
-            let targetIndex = 0;
-            if (mType === TILES.MAP_BASIC) targetIndex = Math.floor(Math.random() * (mapCandidates.length * 0.33));
-            else if (mType === TILES.MAP_ADVANCED) targetIndex = Math.floor(Math.random() * (mapCandidates.length * 0.33)) + Math.floor(mapCandidates.length * 0.33);
-            else targetIndex = Math.floor(Math.random() * (mapCandidates.length * 0.33)) + Math.floor(mapCandidates.length * 0.66);
+            if (openTiles.length === 0) break;
 
-            // Wrap range
-            targetIndex = Math.min(targetIndex, mapCandidates.length - 1);
-            const pos = mapCandidates[targetIndex];
+            let targetIndex = 0;
+            if (mType === TILES.MAP_BASIC) targetIndex = Math.floor(Math.random() * (openTiles.length * 0.33));
+            else if (mType === TILES.MAP_ADVANCED) targetIndex = Math.floor(Math.random() * (openTiles.length * 0.33)) + Math.floor(openTiles.length * 0.33);
+            else targetIndex = Math.floor(Math.random() * (openTiles.length * 0.33)) + Math.floor(openTiles.length * 0.66);
+
+            targetIndex = Math.min(targetIndex, openTiles.length - 1);
+            const pos = openTiles[targetIndex];
             if (pos) {
                 map[pos.y][pos.x] = mType;
-                // Remove from candidates (splice or just let it overwrite if collision, but overwrite is bad)
-                mapCandidates.splice(targetIndex, 1);
+                openTiles.splice(targetIndex, 1);
             }
         }
 
@@ -249,7 +355,8 @@ export class ProcGen {
 
         return {
             map: map,
-            size: size
+            size: size,
+            treasures: placedTreasures || treasures // Use actual placed count if tracked, otherwise config
         };
     }
 
@@ -305,5 +412,107 @@ export class ProcGen {
             curr = paths[`${curr.x}_${curr.y}`];
         }
         return path.reverse();
+    }
+
+
+    // BFS Solvability Check
+    static checkMapSolvable(map, size, startPos, totalTreasures) {
+        // Collect all treasures to assign indices
+        const treasures = [];
+        for (let y = 0; y < size; y++) {
+            for (let x = 0; x < size; x++) {
+                if (map[y][x] === TILES.TREASURE) {
+                    treasures.push({ x, y });
+                }
+            }
+        }
+
+        const treasureCount = treasures.length;
+        if (treasureCount === 0) return true;
+
+        const targetGemMask = (1 << treasureCount) - 1;
+
+        // BFS Helper for State: x, y, itemMask, gemMask
+        // itemMask bits: 0:Hammer, 1:Key1, 2:Key2, 3:Key3
+        const queue = [];
+        const visited = new Set();
+
+        const startState = {
+            x: startPos.x,
+            y: startPos.y,
+            items: 0,
+            gems: 0
+        };
+
+        queue.push(startState);
+        visited.add(`${startState.x},${startState.y},0,0`);
+
+        // Directions
+        const dirs = [
+            { x: 0, y: -1 }, { x: 0, y: 1 }, { x: -1, y: 0 }, { x: 1, y: 0 }
+        ];
+
+        while (queue.length > 0) {
+            const current = queue.shift();
+
+            // Check Win
+            if (current.gems === targetGemMask) return true;
+
+            for (const d of dirs) {
+                const nx = current.x + d.x;
+                const ny = current.y + d.y;
+
+                // Bounds
+                if (nx < 0 || nx >= size || ny < 0 || ny >= size) continue;
+
+                const tile = map[ny][nx];
+
+                // Solids
+                if (tile === TILES.WALL) continue;
+
+                // Locked Obstacles Check
+                if (tile === TILES.SECRET_WALL) {
+                    if (!((current.items >> 0) & 1)) continue;
+                }
+                if (tile === TILES.DOOR_1) {
+                    if (!((current.items >> 1) & 1)) continue;
+                }
+                if (tile === TILES.DOOR_2) {
+                    if (!((current.items >> 2) & 1)) continue;
+                }
+                if (tile === TILES.DOOR_3) {
+                    if (!((current.items >> 3) & 1)) continue;
+                }
+
+                // Calculate New State
+                let nextItems = current.items;
+                let nextGems = current.gems;
+
+                // Pickup Items
+                if (tile === TILES.HAMMER) nextItems |= (1 << 0);
+                if (tile === TILES.KEY_1) nextItems |= (1 << 1);
+                if (tile === TILES.KEY_2) nextItems |= (1 << 2);
+                if (tile === TILES.KEY_3) nextItems |= (1 << 3);
+
+                // Pickup Treasure
+                if (tile === TILES.TREASURE) {
+                    const tIdx = treasures.findIndex(t => t.x === nx && t.y === ny);
+                    if (tIdx !== -1) {
+                        nextGems |= (1 << tIdx);
+                    }
+                }
+
+                // Add to Queue if not visited
+                const stateKey = `${nx},${ny},${nextItems},${nextGems}`;
+                if (!visited.has(stateKey)) {
+                    visited.add(stateKey);
+                    queue.push({
+                        x: nx, y: ny, items: nextItems, gems: nextGems
+                    });
+                }
+            }
+        }
+
+        return false;
     }
 }

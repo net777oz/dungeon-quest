@@ -93,8 +93,25 @@ window.onload = function () {
     // Start in Play Mode
     enterPlayMode();
 
+    // Initial Resize
+    handleResize();
+    window.addEventListener('resize', handleResize);
+
     requestAnimationFrame(gameLoop);
 };
+
+function handleResize() {
+    const canvas = document.getElementById('screen');
+    const container = document.getElementById('game-container');
+
+    // Fit to window
+    canvas.style.width = '100vw';
+    canvas.style.height = '100vh';
+
+    // Optional: Update internal resolution? 
+    // For pixel art, we usually keep low res (e.g. 640x480) and scale up.
+    // CSS handleResize is enough for visual fill.
+}
 
 // --- Main Loop ---
 function gameLoop(timestamp) {

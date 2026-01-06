@@ -66,13 +66,13 @@ export class Effects {
             <div class="firework"></div>
             
             <div style="margin-top: 20px; z-index: 100; position: relative; display: flex; gap: 10px; justify-content: center;">
-                <button class="v-btn" onclick="restartLevel()">🔄 다시 하기 (Restart)</button>
-                <button class="v-btn" onclick="generateRandomMap()">🎲 같은 크기 (Regenerate)</button>
+                <button class="v-btn" onclick="restartLevel()">🔄 [X] 다시 하기 (Restart)</button>
+                <button class="v-btn" onclick="generateRandomMap()">🎲 [Y] 같은 크기 (Regenerate)</button>
             </div>
             
             <div style="margin-top: 10px; z-index: 100; position: relative; display: flex; gap: 10px; justify-content: center;">
-                <button id="btn-smaller" class="v-btn" onclick="resizeMap(-5)">⬇️ 작게 (-5)</button>
-                <button id="btn-larger" class="v-btn" onclick="resizeMap(5)">⬆️ 크게 (+5)</button>
+                <button id="btn-smaller" class="v-btn" onclick="resizeMap(-5)">⬇️ [A] 작게 (-5)</button>
+                <button id="btn-larger" class="v-btn" onclick="resizeMap(5)">⬆️ [B] 크게 (+5)</button>
             </div>
         `;
         container.appendChild(div);

@@ -25,6 +25,45 @@ export function updateGame(dt) {
 }
 
 export function handleGameInput(dx, dy, dt, gp) {
+    // 0. Check Victory Screen
+    if (document.querySelector('.victory-screen')) {
+        if (gp) {
+            // Simple debounce using timestamp
+            if (Date.now() - (AppState.lastInputTime || 0) > 500) {
+                // X (Button 2): Restart (Reload Level)
+                if (gp.buttons[2] && gp.buttons[2].pressed) {
+                    window.restartLevel();
+                    AppState.lastInputTime = Date.now();
+                }
+                // Y (Button 3): Regenerate (New Random Map)
+                else if (gp.buttons[3] && gp.buttons[3].pressed) {
+                    window.generateRandomMap();
+                    AppState.lastInputTime = Date.now();
+                }
+                // A (Button 1): Larger Map (+5)
+                else if (gp.buttons[1] && gp.buttons[1].pressed) {
+                    window.resizeMap(5);
+                    AppState.lastInputTime = Date.now();
+                }
+                // B (Button 0): Smaller Map (-5)
+                else if (gp.buttons[0] && gp.buttons[0].pressed) {
+                    window.resizeMap(-5);
+                    AppState.lastInputTime = Date.now();
+                }
+            }
+        }
+        return; // Block other inputs
+    }
+
+    // Cheat: L1 (4) + R1 (5) = Legendary Map
+    if (gp && gp.buttons[4] && gp.buttons[4].pressed && gp.buttons[5] && gp.buttons[5].pressed) {
+        if (AppState.inventory.mapLevel < 3) {
+            AppState.inventory.mapLevel = 3; // Legendary
+            updateInventoryUI();
+            Effects.showFloatingIcon("⚡", "치트 발동!", "#f1c40f");
+        }
+    }
+
     // Sync logic state if not rotating
     if (!isRotating && Math.abs(AppState.player.dir - targetDir) > 0.1) {
         // This handles external drifts or initial load mismatches
