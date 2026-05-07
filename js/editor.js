@@ -1,6 +1,9 @@
 import { AppState, TILES, TILE_COLORS, TILE_ICONS } from './state.js';
 
+const undoStack = [];
+
 export function createEmptyMap(size) {
+    undoStack.splice(0);
     AppState.mapSize = size;
     AppState.map = [];
     for (let y = 0; y < size; y++) {
@@ -15,6 +18,7 @@ export function createEmptyMap(size) {
 
 export function loadLevel(levelData) {
     if (!levelData) return;
+    undoStack.splice(0);
 
     AppState.mapSize = levelData.size;
     // Deep copy the map to avoid editing the original reference in LEVELS
@@ -104,6 +108,21 @@ export function renderEditor() {
 
                 ctx.fillText(TILE_ICONS[tile], offsetX + x * cellSize + cellSize / 2, offsetY + y * cellSize + cellSize / 2);
             }
+
+            // Key-Door connection highlight
+            const sel = AppState.selectedTile;
+            const pairs = [
+                { key: TILES.KEY_1, door: TILES.DOOR_1, color: '#bdc3c7' },
+                { key: TILES.KEY_2, door: TILES.DOOR_2, color: '#d35400' },
+                { key: TILES.KEY_3, door: TILES.DOOR_3, color: '#0047ab' },
+            ];
+            for (const p of pairs) {
+                if ((sel === p.key && tile === p.door) || (sel === p.door && tile === p.key)) {
+                    ctx.strokeStyle = p.color;
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(offsetX + x * cellSize + 1, offsetY + y * cellSize + 1, cellSize - 3, cellSize - 3);
+                }
+            }
         }
     }
 
@@ -154,6 +173,8 @@ export function placeTileAtCursor() {
     const currentTile = AppState.map[y][x];
 
     if (tileToPlace === TILES.EMPTY) {
+        undoStack.push(JSON.parse(JSON.stringify(AppState.map)));
+        if (undoStack.length > 50) undoStack.shift();
         AppState.map[y][x] = tileToPlace;
         return;
     }
@@ -163,10 +184,20 @@ export function placeTileAtCursor() {
     const isItem = currentTile > TILES.WALL;
 
     if (isPath || isItem || currentTile === TILES.SECRET_WALL) {
+        undoStack.push(JSON.parse(JSON.stringify(AppState.map)));
+        if (undoStack.length > 50) undoStack.shift();
         AppState.map[y][x] = tileToPlace;
     } else {
-        // trying to place on wall -> Error Feedback?
-        // showNotification is global logic, might need to import or dispatch event
-        console.log("Cannot place here");
+        const overlay = document.getElementById('message-overlay');
+        if (overlay) {
+            overlay.innerText = "길을 먼저 파주세요! ⬛";
+            overlay.style.opacity = 1;
+            setTimeout(() => overlay.style.opacity = 0, 1500);
+        }
     }
+}
+
+export function undoLastTile() {
+    if (undoStack.length === 0) return;
+    AppState.map = undoStack.pop();
 }

@@ -277,6 +277,121 @@ export function renderGame(dt) {
     if (AppState.inventory.mapLevel > 0) {
         drawMinimap(ctx, w);
     }
+
+    drawHintArrow(ctx, w, h);
+    drawCompass(ctx, w, h);
+}
+
+function drawHintArrow(ctx, w, h) {
+    const target = AppState.hintTarget;
+    if (!target) return;
+
+    const worldAngle = Math.atan2(target.y - AppState.player.y, target.x - AppState.player.x);
+    const angle = worldAngle - AppState.player.dir;
+
+    // 화면 가장자리 교점 계산
+    const margin = 55;
+    const cx = w / 2;
+    const cy = h / 2;
+    const dx = Math.cos(angle);
+    const dy = Math.sin(angle);
+    const tX = dx !== 0 ? (dx > 0 ? (w - margin - cx) : (margin - cx)) / dx : Infinity;
+    const tY = dy !== 0 ? (dy > 0 ? (h - margin - cy) : (margin - cy)) / dy : Infinity;
+    const t = Math.min(Math.abs(tX), Math.abs(tY));
+    const ax = cx + dx * t;
+    const ay = cy + dy * t;
+
+    const pulse = 0.5 + 0.5 * Math.sin(Date.now() / 250);
+
+    ctx.save();
+    ctx.globalAlpha = 0.6 + 0.4 * pulse;
+    ctx.translate(ax, ay);
+    ctx.rotate(angle);
+
+    // 삼각형 화살표
+    ctx.beginPath();
+    ctx.moveTo(18, 0);
+    ctx.lineTo(-10, -9);
+    ctx.lineTo(-10, 9);
+    ctx.closePath();
+    ctx.fillStyle = '#f1c40f';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // 아이콘: 지도 있으면 실제 아이템, 없으면 ?
+    ctx.rotate(-angle);
+    ctx.font = '18px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const icon = AppState.inventory.mapLevel > 0 ? TILE_ICONS[target.tile] : '❓';
+    ctx.fillText(icon, 0, -26);
+
+    ctx.restore();
+}
+
+function drawCompass(ctx, w, h) {
+    const cx = w - 50;
+    const cy = h - 50;
+    const r = 32;
+
+    ctx.save();
+    ctx.translate(cx, cy);
+
+    // Background circle
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(0, 0, 0, 0.65)";
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,0.3)";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Rotate inner compass: current facing direction rises to top
+    ctx.save();
+    ctx.rotate(-(AppState.player.dir + Math.PI / 2));
+
+    // Cardinal labels — top of each letter faces outward
+    const cardinals = [
+        { label: '북', angle: -Math.PI / 2, color: '#e74c3c' },
+        { label: '남', angle:  Math.PI / 2, color: 'rgba(255,255,255,0.7)' },
+        { label: '동', angle:  0,           color: 'rgba(255,255,255,0.7)' },
+        { label: '서', angle:  Math.PI,     color: 'rgba(255,255,255,0.7)' },
+    ];
+    ctx.font = 'bold 9px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    for (const c of cardinals) {
+        const lx = Math.cos(c.angle) * (r - 10);
+        const ly = Math.sin(c.angle) * (r - 10);
+        ctx.save();
+        ctx.translate(lx, ly);
+        ctx.rotate(c.angle + Math.PI / 2);
+        ctx.fillStyle = c.color;
+        ctx.fillText(c.label, 0, 0);
+        ctx.restore();
+    }
+
+    // Red arrow → North (뾰족한 삼각형)
+    const tipY = -(r - 12);
+    ctx.beginPath();
+    ctx.moveTo(0, tipY);        // 뾰족한 끝
+    ctx.lineTo(4, 4);           // 오른쪽 밑
+    ctx.lineTo(-4, 4);          // 왼쪽 밑
+    ctx.closePath();
+    ctx.fillStyle = '#e74c3c';
+    ctx.fill();
+
+    ctx.restore();
+
+    // Center pivot dot
+    ctx.beginPath();
+    ctx.arc(0, 0, 2.5, 0, Math.PI * 2);
+    ctx.fillStyle = 'white';
+    ctx.fill();
+
+    ctx.restore();
 }
 
 function drawMinimap(ctx, screenWidth) {

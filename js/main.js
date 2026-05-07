@@ -1,5 +1,5 @@
 import { AppState, TILES, TILE_ICONS, TILE_COLORS } from './state.js';
-import { loadLevel, exportMapData, createEmptyMap, renderEditor, handleEditorInput, placeTileAtCursor } from './editor.js';
+import { loadLevel, exportMapData, createEmptyMap, renderEditor, handleEditorInput, placeTileAtCursor, undoLastTile } from './editor.js';
 import { renderGame } from './renderer.js';
 import { handleGameInput, updateGame, performInteraction } from './game.js';
 import { LEVELS } from './levels.js';
@@ -168,7 +168,13 @@ function handleInput(dt) {
 }
 
 function setupEvents() {
-    window.addEventListener('keydown', e => AppState.keysPressed[e.code] = true);
+    window.addEventListener('keydown', e => {
+        AppState.keysPressed[e.code] = true;
+        if ((e.ctrlKey || e.metaKey) && e.code === 'KeyZ' && AppState.mode === 'EDITOR') {
+            e.preventDefault();
+            undoLastTile();
+        }
+    });
     window.addEventListener('keyup', e => AppState.keysPressed[e.code] = false);
 
     window.addEventListener("gamepadconnected", (e) => {
@@ -230,8 +236,24 @@ function setupEvents() {
 
     document.getElementById('play-btn').onclick = enterPlayMode;
     document.getElementById('edit-btn').onclick = enterEditorMode;
+    document.getElementById('validate-btn').onclick = () => {
+        let startPos = { x: 1, y: 1 };
+        let treasureCount = 0;
+        for (let y = 0; y < AppState.mapSize; y++) {
+            for (let x = 0; x < AppState.mapSize; x++) {
+                if (AppState.map[y][x] === TILES.START) startPos = { x, y };
+                if (AppState.map[y][x] === TILES.TREASURE) treasureCount++;
+            }
+        }
+        if (treasureCount === 0) {
+            alert("보석(💎)이 없어요! 먼저 배치해주세요.");
+            return;
+        }
+        const ok = ProcGen.checkMapSolvable(AppState.map, AppState.mapSize, startPos, treasureCount);
+        alert(ok ? "✅ 이 맵은 풀 수 있어요!" : "❌ 못 풌어요. 열쇠/문/보석 위치를 확인해주세요.");
+    };
     document.getElementById('reset-map-btn').onclick = () => {
-        if (confirm("Clear Map?")) createEmptyMap(10);
+        if (confirm("Clear Map?")) createEmptyMap(parseInt(document.getElementById('size-slider').value));
     };
 
     // Size Slider
@@ -383,6 +405,13 @@ function enterPlayMode() {
         }
     }
 
+    if (AppState.inventory.totalTreasures === 0) {
+        showNotification("💎 보석을 먼저 배치해주세요!");
+        return;
+    }
+
+    AppState.initialMap = JSON.parse(JSON.stringify(AppState.map));
+
     AppState.mode = 'PLAY';
     document.getElementById('editor-ui').style.display = 'none';
     document.getElementById('game-ui').style.display = 'block';
@@ -418,6 +447,9 @@ function enterPlayMode() {
 }
 
 function enterEditorMode() {
+    if (AppState.initialMap) {
+        AppState.map = JSON.parse(JSON.stringify(AppState.initialMap));
+    }
     AppState.mode = 'EDITOR';
     document.getElementById('editor-ui').style.display = 'block';
     document.getElementById('game-ui').style.display = 'none';

@@ -22,6 +22,66 @@ export function updateGame(dt) {
             AppState.player.dir += Math.sign(diff) * speed;
         }
     }
+
+    // Hint timer: reset on movement, trigger after 30s idle
+    if (AppState.player.isMoving || isRotating) {
+        AppState.hintTimer = 0;
+        AppState.hintTarget = null;
+    } else {
+        AppState.hintTimer += dt;
+        if (AppState.hintTimer >= 30 && !AppState.hintTarget) {
+            AppState.hintTarget = computeHint();
+        }
+    }
+}
+
+function computeHint() {
+    const inv = AppState.inventory;
+    const map = AppState.map;
+    const size = AppState.mapSize;
+    const px = AppState.player.x;
+    const py = AppState.player.y;
+
+    function findNearest(types) {
+        let best = null, bestDist = Infinity;
+        for (let y = 0; y < size; y++) {
+            for (let x = 0; x < size; x++) {
+                if (types.includes(map[y][x])) {
+                    const d = Math.abs(x + 0.5 - px) + Math.abs(y + 0.5 - py);
+                    if (d < bestDist) { bestDist = d; best = { x: x + 0.5, y: y + 0.5, tile: map[y][x] }; }
+                }
+            }
+        }
+        return best;
+    }
+
+    // 1순위: 열쇠 보유 중 → 해당 문 방향
+    for (let i = 0; i < 3; i++) {
+        if (inv.keys[i]) {
+            const door = findNearest([TILES.DOOR_1 + i]);
+            if (door) return door;
+        }
+    }
+
+    // 2순위: 미보유 열쇠가 맵에 있음 → 가장 가까운 열쇠
+    for (let i = 0; i < 3; i++) {
+        if (!inv.keys[i]) {
+            const key = findNearest([TILES.KEY_1 + i]);
+            if (key) return key;
+        }
+    }
+
+    // 3순위: 보물
+    const treasure = findNearest([TILES.TREASURE]);
+    if (treasure) return treasure;
+
+    // 4순위: 망치 미보유
+    if (!inv.hammer) {
+        const hammer = findNearest([TILES.HAMMER]);
+        if (hammer) return hammer;
+    }
+
+    return null;
 }
 
 export function handleGameInput(dx, dy, dt, gp) {

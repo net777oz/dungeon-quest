@@ -371,7 +371,9 @@ export class ProcGen {
         let maxPos = { x: startX, y: startY };
 
         const isWalkable = (val) => {
-            if (val === TILES.EMPTY || val === TILES.START || val === TILES.HAMMER || val === TILES.TREASURE || (val >= TILES.KEY_1 && val <= TILES.KEY_3) || (val >= TILES.MAP_BASIC && val <= TILES.MAP_LEGENDARY)) return true;
+            if (val === TILES.EMPTY || val === TILES.START || val === TILES.HAMMER || val === TILES.TREASURE) return true;
+            if (val >= TILES.KEY_1 && val <= TILES.KEY_3) return true;
+            if (val === TILES.MAP_BASIC || val === TILES.MAP_ADVANCED || val === TILES.MAP_LEGENDARY) return true;
             if (ignoreDoors && (val >= TILES.DOOR_1 && val <= TILES.DOOR_3)) return true;
             if (allowedTiles.includes(val)) return true;
             return false;

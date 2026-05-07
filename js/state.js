@@ -69,5 +69,8 @@ export const AppState = {
 
     gamepadIndex: null,
     keysPressed: {},
-    lastTime: 0
+    lastTime: 0,
+
+    hintTimer: 0,
+    hintTarget: null
 };
